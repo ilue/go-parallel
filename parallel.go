@@ -24,7 +24,7 @@ func ParallelFor(first, last int, f func(int)) {
 	wg.Add(last - first)
 
 	for i := first; i < last; i++ {
-		parallelForPool.Serve(&ParallelForBody{&wg, f, i})
+		parallelForPool.Serve(&parallelForBody{&wg, f, i})
 	}
 
 	wg.Wait()
