@@ -13,7 +13,7 @@ type parallelForBody struct {
 	arg int
 }
 
-var parallelForPool = slaves.NewPool(runtime.NumCPU()*2, func(obj interface{}) {
+var parallelForPool = slaves.NewPool(runtime.NumCPU(), func(obj interface{}) {
 	body := obj.(*parallelForBody)
 	defer body.wg.Done()
 	body.f(body.arg)
