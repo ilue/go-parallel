@@ -17,12 +17,11 @@ func (self *parallelForJob) Run(workerId int) {
 }
 
 var (
+	workers = runtime.NumCPU()
 	jobCh = make(chan *parallelForJob)
 )
 
 func init() {
-	workers := runtime.NumCPU()
-
 	for i := 0; i < workers; i++ {
 		go func(id int) {
 			for job := range jobCh {
@@ -30,6 +29,10 @@ func init() {
 			}
 		}(i)
 	}
+}
+
+func NumWorkers() int {
+	return workers
 }
 
 func ParallelFor(first, last int, f func(int, int)) {
