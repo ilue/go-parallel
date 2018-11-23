@@ -3,28 +3,41 @@ package parallel
 import (
 	"runtime"
 	"sync"
-
-	"github.com/dgrr/GoSlaves"
 )
 
-type parallelForBody struct {
+type parallelForJob struct {
 	wg  *sync.WaitGroup
-	f   func(int)
+	f   func(int, int)
 	arg int
 }
 
-var parallelForPool = slaves.NewPool(runtime.NumCPU(), func(obj interface{}) {
-	body := obj.(*parallelForBody)
-	defer body.wg.Done()
-	body.f(body.arg)
-})
+func (self *parallelForJob) Run(workerId int) {
+	defer self.wg.Done()
+	self.f(self.arg, workerId)
+}
 
-func ParallelFor(first, last int, f func(int)) {
+var (
+	jobCh = make(chan *parallelForJob)
+)
+
+func init() {
+	workers := runtime.NumCPU()
+
+	for i := 0; i < workers; i++ {
+		go func(id int) {
+			for job := range jobCh {
+				job.Run(id)
+			}
+		}(i)
+	}
+}
+
+func ParallelFor(first, last int, f func(int, int)) {
 	var wg sync.WaitGroup
 	wg.Add(last - first)
 
 	for i := first; i < last; i++ {
-		parallelForPool.Serve(&parallelForBody{&wg, f, i})
+		jobCh <- &parallelForJob{&wg, f, i}
 	}
 
 	wg.Wait()
